@@ -14,10 +14,11 @@
   "license": "MIT",
   "environment": "*",
   "entrypoints": {
-    "main": [
-      "com.skps2010.FoodDiversityMod"
-    ]
+    "main": ["com.skps2010.FoodDiversityMod"]
   },
+  "mixins": [
+    "fooddiversity.mixins.json"
+  ],
   "depends": {
     "fabricloader": ">=0.15.0",
     "fabric": "*",

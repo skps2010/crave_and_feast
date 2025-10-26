@@ -1,14 +1,15 @@
 {
-	"required": true,
-	"package": "com.skps2010.mixin",
-	"compatibilityLevel": "JAVA_21",
-	"mixins": [
-        "FoodComponentMixin"
-	],
-	"injectors": {
-		"defaultRequire": 1
-	},
-	"overwrites": {
-		"requireAnnotations": true
+  "required": true,
+  "package": "com.skps2010.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "FoodComponentMixin",
+    "PlayerManagerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
 	}
 }

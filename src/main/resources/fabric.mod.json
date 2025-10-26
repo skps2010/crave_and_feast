@@ -14,7 +14,8 @@
   "license": "MIT",
   "environment": "*",
   "entrypoints": {
-    "main": ["com.skps2010.FoodDiversityMod"]
+    "main": ["com.skps2010.FoodDiversityMod"],
+    "client": ["com.skps2010.FoodTooltipHandler"]
   },
   "mixins": [
     "fooddiversity.mixins.json"

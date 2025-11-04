@@ -1,6 +1,7 @@
 package com.skps2010.mixin;
 
 import com.skps2010.FoodHistoryPayload;
+import com.skps2010.FoodHistoryState;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.NbtComponent;
@@ -13,13 +14,16 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.List;
+
 @Mixin(PlayerManager.class)
 public class PlayerManagerMixin
 {
     @Inject(at = @At("TAIL"), method = "onPlayerConnect")
     private void onPlayerConnect(ClientConnection conn, ServerPlayerEntity player, ConnectedClientData clientData, CallbackInfo info)
     {
-        NbtComponent persistent = player.getOrDefault(DataComponentTypes.CUSTOM_DATA, NbtComponent.DEFAULT);
-        ServerPlayNetworking.send(player, new FoodHistoryPayload(persistent));
+        FoodHistoryState state = FoodHistoryState.get(player.getServer());
+        List<String> history = state.getHistory(player);
+        ServerPlayNetworking.send(player, new FoodHistoryPayload(history));
     }
 }

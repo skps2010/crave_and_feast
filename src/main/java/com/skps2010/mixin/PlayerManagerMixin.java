@@ -1,7 +1,6 @@
 package com.skps2010.mixin;
 
-import com.skps2010.FoodHistoryPayload;
-import com.skps2010.FoodHistoryState;
+import com.skps2010.*;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.NbtComponent;
@@ -25,5 +24,7 @@ public class PlayerManagerMixin
         FoodHistoryState state = FoodHistoryState.get(player.getServer());
         List<String> history = state.getHistory(player);
         ServerPlayNetworking.send(player, new FoodHistoryPayload(history));
+        ServerPlayNetworking.send(player, new CravingPayload(CravingManager.getCurrentCravingItem(player.getServer(), player.getUuid()),
+                CravingState.CRAVING_INTERVAL_TICKS));
     }
 }

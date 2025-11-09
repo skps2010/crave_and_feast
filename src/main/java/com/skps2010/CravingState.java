@@ -12,8 +12,6 @@ import net.minecraft.world.PersistentStateType;
 import java.util.*;
 
 public class CravingState extends PersistentState {
-    public static final long CRAVING_INTERVAL_TICKS = 30L * 60L * 20L; // 30 分鐘 = 36,000 ticks
-
     // 每位玩家的目前想吃：itemId 與 下一次切換 tick
     public static record Entry(String itemId, long nextChangeTick) {
         public static final Codec<Entry> CODEC = RecordCodecBuilder.create(i -> i.group(

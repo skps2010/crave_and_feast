@@ -59,7 +59,7 @@ public final class CravingManager {
         return false;
     }
 
-    public static boolean isCraving( PlayerEntity player, ItemStack stack) {
+    public static boolean isCraving( PlayerEntity player, Item item) {
         MinecraftServer server = player.getServer();
         if (server == null) return false;
         ensurePool(server);
@@ -74,16 +74,16 @@ public final class CravingManager {
             Item chosen = pickRandomAllowed();
             if (chosen != null) {
                 String itemId = Registries.ITEM.getId(chosen).toString();
-                state.set(uuid, new CravingState.Entry(itemId, now + CravingState.CRAVING_INTERVAL_TICKS));
+                state.set(uuid, new CravingState.Entry(itemId, now + FDConfigs.CFG.cravingChangeInterval));
                 if (player instanceof ServerPlayerEntity spe) {
-                    ServerPlayNetworking.send(spe, new CravingPayload(itemId, CravingState.CRAVING_INTERVAL_TICKS));
+                    ServerPlayNetworking.send(spe, new CravingPayload(itemId, FDConfigs.CFG.cravingChangeInterval));
                 }
                 e = state.get(uuid);
             }
         }
 
         if (e == null) return false;
-        Identifier id = Registries.ITEM.getId(stack.getItem());
+        Identifier id = Registries.ITEM.getId(item);
         return id.toString().equals(e.itemId());
     }
 

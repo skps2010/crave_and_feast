@@ -8,6 +8,7 @@ public class FoodDiversityMod implements ModInitializer {
     public void onInitialize() {
         PayloadTypeRegistry.playS2C().register(FoodHistoryPayload.ID, FoodHistoryPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(CravingPayload.ID, CravingPayload.CODEC);
+        FDConfigs.load();
         System.out.println("[FoodDiversityMod] Initialized - all foods now restore 6 hunger!");
     }
 }

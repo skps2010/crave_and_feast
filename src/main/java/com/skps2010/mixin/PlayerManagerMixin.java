@@ -23,8 +23,8 @@ public class PlayerManagerMixin
     {
         FoodHistoryState state = FoodHistoryState.get(player.getServer());
         List<String> history = state.getHistory(player);
-        ServerPlayNetworking.send(player, new FoodHistoryPayload(history));
+        ServerPlayNetworking.send(player, new FoodHistoryPayload(player));
         ServerPlayNetworking.send(player, new CravingPayload(CravingManager.getCurrentCravingItem(player.getServer(), player.getUuid()),
-                CravingState.CRAVING_INTERVAL_TICKS));
+                FDConfigs.CFG.cravingChangeInterval));
     }
 }

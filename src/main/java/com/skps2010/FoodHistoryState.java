@@ -14,7 +14,6 @@ import java.util.*;
 
 public class FoodHistoryState extends PersistentState {
     private final Map<UUID, List<String>> history = new HashMap<>();
-    private static final int MAX_HISTORY = 32;
 
     // Codec: 用 UUID 當 key
     public static final Codec<FoodHistoryState> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -43,7 +42,7 @@ public class FoodHistoryState extends PersistentState {
         List<String> list = history.computeIfAbsent(player.getUuid(), k -> new ArrayList<>());
 
         list.add(foodId);
-        if (list.size() > MAX_HISTORY) list.removeFirst();
+        if (list.size() > FDConfigs.CFG.recordingFoodCount) list.removeFirst();
 
         int count = 0;
         for (String f : list) if (f.equals(foodId)) count++;

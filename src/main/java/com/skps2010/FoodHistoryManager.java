@@ -3,17 +3,13 @@ package com.skps2010;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
-
-import java.util.List;
-
 public class FoodHistoryManager {
 
     public static int recordAndGetCount(PlayerEntity player, String foodId) {
         if (!(player instanceof ServerPlayerEntity sp)) return 0;
         FoodHistoryState state = FoodHistoryState.get(sp.getServer());
         int record = state.record(player, foodId);
-        List<String> history = state.getHistory(player);
-        ServerPlayNetworking.send(sp, new FoodHistoryPayload(history));
+        ServerPlayNetworking.send(sp, new FoodHistoryPayload(sp));
         return record;
     }
 

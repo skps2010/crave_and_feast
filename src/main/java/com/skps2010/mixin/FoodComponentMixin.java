@@ -1,6 +1,7 @@
 package com.skps2010.mixin;
 
 import com.skps2010.CravingManager;
+import com.skps2010.FDConfigs;
 import com.skps2010.FoodHistoryManager;
 import net.minecraft.component.type.FoodComponent;
 import net.minecraft.entity.LivingEntity;
@@ -12,12 +13,24 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(FoodComponent.class)
 public abstract class FoodComponentMixin {
+
+    @Unique
+    private static float computeMultiplier(boolean craving, int eaten) {
+        var C = FDConfigs.CFG;
+        if (craving) return C.cravingMultiplier;
+
+        for (var r : C.rules) {
+            if (r.maxCount < 0 || eaten <= r.maxCount) return r.multiplier;
+        }
+        return 1.0f;
+    }
 
     @Inject(method = "onConsume", at = @At("HEAD"), cancellable = true)
     private void modifyFoodEffects(World world, LivingEntity user, ItemStack stack,
@@ -27,20 +40,11 @@ public abstract class FoodComponentMixin {
         if (!(user instanceof PlayerEntity player)) return;
 
         // 先判斷「想吃」
-        boolean craving = CravingManager.isCraving(player, stack);
+        boolean craving = CravingManager.isCraving(player, stack.getItem());
         FoodComponent food = (FoodComponent)(Object)this;
 
-        float multiplier;
-        if (craving) {
-            multiplier = 2.0f; // 規則：命中想吃 → 無視歷史，固定 2×
-        } else {
-            // 沒命中 → 走原本「吃過次數」邏輯
-            String foodId = stack.getItem().toString();
-            int eatenCount = FoodHistoryManager.recordAndGetCount(player, foodId);
-            if (eatenCount == 1)      multiplier = 2.0f;
-            else if (eatenCount <= 8) multiplier = 1.5f;
-            else                      multiplier = 1.0f;
-        }
+        int eaten = FoodHistoryManager.recordAndGetCount(player, stack.getItem().toString());
+        float multiplier = computeMultiplier(craving, eaten - 1);
 
         int nutrition = Math.round(food.nutrition() * multiplier);
         float saturation = food.saturation() * multiplier;

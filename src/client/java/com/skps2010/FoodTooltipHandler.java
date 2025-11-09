@@ -11,33 +11,29 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.ConsumableComponent;
-import net.minecraft.component.type.FoodComponent;
 import net.minecraft.item.Item;
 import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Environment(EnvType.CLIENT)
 public class FoodTooltipHandler implements ClientModInitializer {
-    public static final List<String> HISTORY = new ArrayList<>();
     private static ItemStack current = ItemStack.EMPTY;
     private static long remaining = 0L; // ticks
+    private static Map<String, FoodHistoryPayload.FoodInfo> map =
+            Map.of("default", new FoodHistoryPayload.FoodInfo(1, "error"));
 
     @Override
     public void onInitializeClient() {
         ItemTooltipCallback.EVENT.register(FoodTooltipHandler::onTooltip);
 
-        ClientPlayNetworking.registerGlobalReceiver(FoodHistoryPayload.ID, (payload, context) ->
-                context.client().execute(() -> {
-                    HISTORY.clear();
-                    HISTORY.addAll(payload.history());
-                }));
+        ClientPlayNetworking.registerGlobalReceiver(FoodHistoryPayload.ID, (payload, ctx) ->
+                ctx.client().execute(() -> map = Map.copyOf(payload.map()))
+        );
 
         ClientPlayNetworking.registerGlobalReceiver(CravingPayload.ID, (payload, context) -> {
             context.client().execute(() -> {
@@ -52,30 +48,19 @@ public class FoodTooltipHandler implements ClientModInitializer {
         );
     }
 
-    public static int count(String foodId) {
-        int count = 0;
-        for (String f : HISTORY) {
-            if (f.equals(foodId)) count++;
-        }
-        return count;
+    public static FoodHistoryPayload.FoodInfo get(String id) {
+        return map.getOrDefault(id, map.get("default"));
     }
 
     private static void onTooltip(ItemStack stack, Item.TooltipContext ctx, TooltipType type, List<Text> lines) {
         var fc = stack.get(DataComponentTypes.FOOD);
         if (fc == null) return;
 
-        int count = count(stack.getItem().toString());
-        boolean craving = current.getItem() == stack.getItem();
+        var info = get(stack.getItem().toString());
 
-        int base = fc.nutrition();
-        float m = craving ? 2f : count == 0 ? 2f : count < 8 ? 1.5f : 1f;
-        int add  = Math.max(0, Math.round(base * m) - base);
-        lines.add(Text.literal(combinedIcons(base, add)));
-
-
-        if (craving) lines.add(Text.literal("§6Craving!"));
-        else lines.add(Text.literal(count > 0 ? "§7Eaten " + count + " time" + (count > 1 ? "s" : "") : "§7Never eaten"));
-
+        int base = fc.nutrition(), mod = Math.round(base * info.multiplier());
+        lines.add(Text.literal(combinedIcons(base, mod - base)));
+        lines.add(Text.literal(info.display()));
     }
 
     private static String combinedIcons(int basePts, int addPts) {

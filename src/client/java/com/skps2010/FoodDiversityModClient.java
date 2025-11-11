@@ -1,10 +1,10 @@
 package com.skps2010;
 
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.minecraft.client.MinecraftClient;
@@ -12,8 +12,8 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.item.Item;
-import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
@@ -21,30 +21,10 @@ import java.util.List;
 import java.util.Map;
 
 @Environment(EnvType.CLIENT)
-public class FoodTooltipHandler implements ClientModInitializer {
+public class FoodDiversityModClient implements ClientModInitializer {
     private static ItemStack current = ItemStack.EMPTY;
     private static Map<String, FoodHistoryPayload.FoodInfo> map =
             Map.of("default", new FoodHistoryPayload.FoodInfo(1, "error"));
-
-    @Override
-    public void onInitializeClient() {
-        ItemTooltipCallback.EVENT.register(FoodTooltipHandler::onTooltip);
-
-        ClientPlayNetworking.registerGlobalReceiver(FoodHistoryPayload.ID, (payload, ctx) ->
-                ctx.client().execute(() -> map = Map.copyOf(payload.map()))
-        );
-
-        ClientPlayNetworking.registerGlobalReceiver(CravingPayload.ID, (payload, context) -> {
-            context.client().execute(() -> {
-                current = new ItemStack(payload.toItem());
-            });
-        });
-        HudElementRegistry.attachElementBefore(
-                VanillaHudElements.CHAT,
-                Identifier.of("fooddiversity", "craving_hud"),
-                FoodTooltipHandler::render
-        );
-    }
 
     public static FoodHistoryPayload.FoodInfo get(String id) {
         return map.getOrDefault(id, map.get("default"));
@@ -62,7 +42,7 @@ public class FoodTooltipHandler implements ClientModInitializer {
     }
 
     private static String combinedIcons(int basePts, int addPts) {
-        int totalPts  = basePts + addPts;
+        int totalPts = basePts + addPts;
         int totalFull = totalPts / 2;
         int totalHalf = totalPts % 2;
 
@@ -102,5 +82,25 @@ public class FoodTooltipHandler implements ClientModInitializer {
         ctx.drawText(mc.textRenderer, "渴望食物", x + 20, y + 2, 0xFFFFFFFF, true);
         ctx.drawText(mc.textRenderer, current.getName().getString(),
                 x + 20, y + 12, 0xFFAAAAAA, true);
+    }
+
+    @Override
+    public void onInitializeClient() {
+        ItemTooltipCallback.EVENT.register(FoodDiversityModClient::onTooltip);
+
+        ClientPlayNetworking.registerGlobalReceiver(FoodHistoryPayload.ID, (payload, ctx) ->
+                ctx.client().execute(() -> map = Map.copyOf(payload.map()))
+        );
+
+        ClientPlayNetworking.registerGlobalReceiver(CravingPayload.ID, (payload, context) -> {
+            context.client().execute(() -> {
+                current = new ItemStack(payload.toItem());
+            });
+        });
+        HudElementRegistry.attachElementBefore(
+                VanillaHudElements.CHAT,
+                Identifier.of("fooddiversity", "craving_hud"),
+                FoodDiversityModClient::render
+        );
     }
 }

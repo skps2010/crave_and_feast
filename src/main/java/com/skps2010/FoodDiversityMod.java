@@ -11,13 +11,13 @@ public class FoodDiversityMod implements ModInitializer {
         PayloadTypeRegistry.playS2C().register(FoodHistoryPayload.ID, FoodHistoryPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(CravingPayload.ID, CravingPayload.CODEC);
         FDConfigs.load();
-//        ServerTickEvents.END_SERVER_TICK.register(server -> {
-//            long now = server.getOverworld().getTime();
-//            if (now % 20 != 0) return; // 每 20 tick 檢一次
-//            for (ServerPlayerEntity p : server.getPlayerManager().getPlayerList()) {
-//                CravingManager.tickCraving(p, now);
-//            }
-//        });
-        System.out.println("[FoodDiversityMod] Initialized - all foods now restore 6 hunger!");
+        ServerTickEvents.END_SERVER_TICK.register(server -> {
+            long now = server.getOverworld().getTime();
+            if (now % 20 != 0) return; // 每 20 tick 檢一次
+            for (ServerPlayerEntity p : server.getPlayerManager().getPlayerList()) {
+                CravingManager.tickCraving(p, now);
+            }
+        });
+        System.out.println("[FoodDiversityMod] Initialized!");
     }
 }

@@ -19,9 +19,14 @@ public class FDConfig {
         public int maxCount;
         public float multiplier;
         public String display;
-        public Rule() {}
+
+        public Rule() {
+        }
+
         public Rule(int m, float k, String d) {
-            maxCount = m; multiplier = k; display = d;
+            maxCount = m;
+            multiplier = k;
+            display = d;
         }
     }
 }

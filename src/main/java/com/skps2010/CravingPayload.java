@@ -1,10 +1,10 @@
 package com.skps2010;
 
 import net.minecraft.item.Item;
+import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
 
@@ -17,7 +17,12 @@ public record CravingPayload(String itemId) implements CustomPayload {
                     CravingPayload::new
             );
 
-    @Override public Id<? extends CustomPayload> getId() { return ID; }
+    @Override
+    public Id<? extends CustomPayload> getId() {
+        return ID;
+    }
 
-    public Item toItem() { return Registries.ITEM.get(Identifier.tryParse(itemId)); }
+    public Item toItem() {
+        return Registries.ITEM.get(Identifier.tryParse(itemId));
+    }
 }

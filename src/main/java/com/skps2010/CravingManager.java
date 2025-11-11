@@ -2,103 +2,85 @@
 package com.skps2010;
 
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.component.type.ConsumableComponent;
-import net.minecraft.entity.effect.StatusEffect;
+import net.minecraft.component.DataComponentTypes;
 import net.minecraft.entity.effect.StatusEffectCategory;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.consume.ApplyEffectsConsumeEffect;
-import net.minecraft.item.consume.ConsumeEffect;
 import net.minecraft.registry.Registries;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.Identifier;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.FoodComponent;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.StreamSupport;
 
 public final class CravingManager {
-    private CravingManager() {}
-
-    // 快取「沒有負面效果」的食物清單（資料包重載時記得重建）
+    // 缓存可用食物
     private static volatile List<Item> allowedFoods = List.of();
 
-    public static void rebuildAllowedFoods() {
-        List<Item> list = new ArrayList<>();
-        for (Item item : Registries.ITEM) {
-            // 只要有 FoodComponent 才算食物（避免把藥水、其他物品塞進來）
-            if (item.getComponents().get(DataComponentTypes.FOOD) == null) continue;
+    private CravingManager() {
+    }
 
-            if (!hasNegativeEffect(item)) {
-                list.add(item);
-            }
-        }
-        allowedFoods = List.copyOf(list);
+    /* ------------------------- 可食物池 ------------------------- */
+
+    public static void rebuildAllowedFoods() {
+        allowedFoods = StreamSupport.stream(Registries.ITEM.spliterator(), false)
+                .filter(i -> i.getComponents().get(DataComponentTypes.FOOD) != null)
+                .filter(i -> !hasNegativeEffect(i))
+                .toList();
     }
 
     private static boolean hasNegativeEffect(Item item) {
-        ConsumableComponent cc = item.getComponents().get(DataComponentTypes.CONSUMABLE);
-        if (cc == null) return false; // 沒有可食用效果就視為沒有負面效果
-
-        // 走訪所有消耗效果，挑出會套用藥水效果的那種
-        for (ConsumeEffect ce : cc.onConsumeEffects()) {
-            if (ce instanceof ApplyEffectsConsumeEffect apply) {
-                for (StatusEffectInstance inst : apply.effects()) {
-                    StatusEffect effect = inst.getEffectType().value();
-                    // 只排除「有害」效果；如果你想連中性也排除，改成 != BENEFICIAL
-                    if (effect.getCategory() == StatusEffectCategory.HARMFUL) {
+        var cc = item.getComponents().get(DataComponentTypes.CONSUMABLE);
+        if (cc == null) return false;
+        for (var ce : cc.onConsumeEffects()) {
+            if (ce instanceof ApplyEffectsConsumeEffect a)
+                for (var inst : a.effects())
+                    if (inst.getEffectType().value().getCategory() == StatusEffectCategory.HARMFUL)
                         return true;
-                    }
-                }
-            }
         }
         return false;
     }
 
-    // 確保當前渴望存在；到期就重抽並通知
-    public static CravingState.Entry ensureCraving(ServerPlayerEntity p){
-        var s = p.getServer(); var w = p.getWorld();
-        var st = CravingState.get(s);
+    private static Optional<String> pickRandomAllowedId() {
+        if (allowedFoods.isEmpty()) rebuildAllowedFoods();
+        var pool = allowedFoods;
+        if (pool.isEmpty()) return Optional.empty();
+        var it = pool.get(ThreadLocalRandom.current().nextInt(pool.size()));
+        return Optional.of(Registries.ITEM.getId(it).toString());
+    }
+
+    /* ------------------------- 核心流程 ------------------------- */
+
+    // 確保有渴望；過期則換新並通知
+    public static CravingState.Entry ensureCraving(ServerPlayerEntity p) {
+        var st = CravingState.get(p.getServer());
+        var now = p.getWorld().getTime();
         var e = st.get(p.getUuid());
-        long now = w.getTime();
-        if (e == null || now >= e.nextChangeTick()) {
-            String id = Registries.ITEM.getId(pickRandomAllowed()).toString();
-            long next = now + FDConfigs.CFG.cravingChangeInterval;
-            e = new CravingState.Entry(id, next, 0);
-            st.set(p.getUuid(), e);
-            // 主動通知
-            ServerPlayNetworking.send(p, new CravingPayload(id));
-        }
+        if (e == null || now >= e.nextChangeTick()) e = rerollCraving(p, now);
         return e;
     }
 
-    // 玩家吃東西時呼叫；若是渴望就遞增，達上限則立刻重抽並通知
-    public static void onConsume(ServerPlayerEntity p, ItemStack stack){
+    // 吃東西時呼叫；命中渴望則遞增，上限即換新並通知
+    public static void onConsume(ServerPlayerEntity p, ItemStack stack) {
         var e = ensureCraving(p);
-        String id = Registries.ITEM.getId(stack.getItem()).toString();
-        if (!e.itemId().equals(id)) return;
+        var id = Registries.ITEM.getId(stack.getItem()).toString();
+        if (!id.equals(e.itemId())) return;
 
         var st = CravingState.get(p.getServer());
-        int c = e.eatenInRound() + 1;
-        st.set(p.getUuid(), e.withCount(c));
+        var c = e.eatenInRound() + 1;
+        st.set(p.getUuid(), new CravingState.Entry(e.itemId(), e.nextChangeTick(), c));
 
-        if (c >= FDConfigs.CFG.cravingMaxCount) {
-            long now = p.getWorld().getTime();
-            String nextId = pickRandomAllowed().toString();
-            long next = now + FDConfigs.CFG.cravingChangeInterval;
-            st.set(p.getUuid(), new CravingState.Entry(nextId, next, 0));
-            // 主動通知
-            ServerPlayNetworking.send(p, new CravingPayload(nextId));
-        }
+        if (c >= FDConfigs.CFG.cravingMaxCount) rerollCraving(p, p.getWorld().getTime());
     }
 
-    public static boolean isCraving(ServerPlayerEntity p, Item item){
+    public static boolean isCraving(ServerPlayerEntity p, Item item) {
         var e = ensureCraving(p);
-        return Registries.ITEM.getId(item).toString().equals(e.itemId());
+        var id = Registries.ITEM.getId(item).toString();
+        return id.equals(e.itemId());
     }
 
     public static String getCurrentCravingItem(MinecraftServer server, UUID uuid) {
@@ -107,11 +89,24 @@ public final class CravingManager {
         return e.itemId();
     }
 
-    private static Item pickRandomAllowed() {
-        if (allowedFoods.isEmpty()) rebuildAllowedFoods();
-        List<Item> pool = allowedFoods;
-        if (pool.isEmpty()) return null;
-        int idx = ThreadLocalRandom.current().nextInt(pool.size());
-        return pool.get(idx);
+    /* ------------------------- 換新＋通知 ------------------------- */
+
+    private static CravingState.Entry rerollCraving(ServerPlayerEntity p, long now) {
+        var st = CravingState.get(p.getServer());
+        var id = pickRandomAllowedId().orElse("minecraft:bread"); // 安全後備
+        var next = now + FDConfigs.CFG.cravingChangeInterval;
+
+        var e = new CravingState.Entry(id, next, 0);
+        st.set(p.getUuid(), e);
+
+        // 主動通知（含剩餘時間）
+        ServerPlayNetworking.send(p, new CravingPayload(id));
+        return e;
+    }
+
+    public static void tickCraving(ServerPlayerEntity p, long now) {
+        var st = CravingState.get(p.getServer());
+        var e = st.get(p.getUuid());
+        if (e == null || now >= e.nextChangeTick()) rerollCraving(p, now); // 內部會送 CravingPayload
     }
 }

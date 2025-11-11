@@ -5,7 +5,6 @@ import com.skps2010.FDConfigs;
 import com.skps2010.FoodHistoryManager;
 import net.minecraft.component.type.FoodComponent;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
@@ -43,7 +42,7 @@ public abstract class FoodComponentMixin {
         CravingManager.onConsume(player, stack);
         // 先判斷「想吃」
         boolean craving = CravingManager.isCraving(player, stack.getItem());
-        FoodComponent food = (FoodComponent)(Object)this;
+        FoodComponent food = (FoodComponent) (Object) this;
 
         int eaten = FoodHistoryManager.recordAndGetCount(player, stack.getItem().toString());
         float multiplier = computeMultiplier(craving, eaten - 1);

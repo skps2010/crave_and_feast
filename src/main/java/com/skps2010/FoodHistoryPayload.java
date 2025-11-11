@@ -1,6 +1,5 @@
 package com.skps2010;
 
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.codec.PacketCodecs;
@@ -9,23 +8,18 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 public record FoodHistoryPayload(Map<String, FoodInfo> map) implements CustomPayload {
     public static final Id<FoodHistoryPayload> ID =
             new Id<>(Identifier.of("food_diversity", "food_history_sync"));
-
-    public record FoodInfo(float multiplier, String display) {}
-
     private static final PacketCodec<RegistryByteBuf, FoodInfo> INFO_CODEC =
             PacketCodec.tuple(
                     PacketCodecs.FLOAT, FoodInfo::multiplier,
                     PacketCodecs.STRING, FoodInfo::display,
                     FoodInfo::new
             );
-
     public static final PacketCodec<RegistryByteBuf, FoodHistoryPayload> CODEC =
             PacketCodec.tuple(
                     PacketCodecs.map(HashMap::new, PacketCodecs.STRING, INFO_CODEC),
@@ -54,15 +48,21 @@ public record FoodHistoryPayload(Map<String, FoodInfo> map) implements CustomPay
             String foodId = e.getKey();
             int count = e.getValue().intValue();
 
-            float mult; String disp;
+            float mult;
+            String disp;
             if (foodId.equals(cravingId)) {
                 mult = cfg.cravingMultiplier;
                 disp = cfg.cravingDisplay;
             } else {
                 // 套用 rules
-                mult = 1.0f; disp = "";
+                mult = 1.0f;
+                disp = "";
                 for (var r : cfg.rules) {
-                    if (r.maxCount < 0 || count <= r.maxCount) { mult = r.multiplier; disp = r.display; break; }
+                    if (r.maxCount < 0 || count <= r.maxCount) {
+                        mult = r.multiplier;
+                        disp = r.display;
+                        break;
+                    }
                 }
             }
             map.put(foodId, new FoodInfo(mult, disp));
@@ -80,7 +80,13 @@ public record FoodHistoryPayload(Map<String, FoodInfo> map) implements CustomPay
         return map;
     }
 
-    @Override public Id<? extends CustomPayload> getId() { return ID; }
+    @Override
+    public Id<? extends CustomPayload> getId() {
+        return ID;
+    }
+
+    public record FoodInfo(float multiplier, String display) {
+    }
 }
 
 

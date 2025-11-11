@@ -13,8 +13,8 @@ public class FDConfig {
     public int hudY = 10;
     public List<Rule> rules = List.of(
             new Rule(0, 2.0f, "cf.rule.never"),
-            new Rule(7, 1.5f, "cf.rule.rare"),
-            new Rule(-1, 1.0f, "cf.rule.often")
+            new Rule(7, 1.4f, "cf.rule.rare"),
+            new Rule(-1, 0.8f, "cf.rule.often")
     );
 
     public static class Rule {

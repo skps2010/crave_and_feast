@@ -9,6 +9,8 @@ public class FDConfig {
     public long cravingChangeInterval = 24000L;
     public int recordingFoodCount = 32;
     public int cravingMaxCount = 5;
+    public int hudX = 10;
+    public int hudY = 10;
     public List<Rule> rules = List.of(
             new Rule(0, 2.0f, "fd.rule.never"),
             new Rule(7, 1.5f, "fd.rule.rare"),

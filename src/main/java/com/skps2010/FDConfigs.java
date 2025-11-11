@@ -17,14 +17,15 @@ public final class FDConfigs {
         try {
             if (Files.notExists(p)) {
                 CFG = new FDConfig();
-                Files.createDirectories(p.getParent());
-                Files.writeString(p, gson.toJson(CFG));
             } else {
                 CFG = gson.fromJson(Files.readString(p), FDConfig.class);
                 if (CFG == null) CFG = new FDConfig();
             }
+            // 每次載入後回寫一次，以補上新欄位
+            Files.createDirectories(p.getParent());
+            Files.writeString(p, gson.toJson(CFG));
         } catch (IOException e) {
-            CFG = new FDConfig(); // 失敗就用預設
+            CFG = new FDConfig();
         }
     }
 }

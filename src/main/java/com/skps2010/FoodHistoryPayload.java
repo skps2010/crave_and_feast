@@ -33,9 +33,9 @@ public record FoodHistoryPayload(Map<String, FoodInfo> map) implements CustomPay
 
     private static Map<String, FoodInfo> makeMap(ServerPlayerEntity player) {
         var cfg = FDConfigs.CFG;
-        FoodHistoryState state = FoodHistoryState.get(player.getServer());
+        FoodHistoryState state = FoodHistoryState.get(player.getEntityWorld().getServer());
         var history = state.getHistory(player);
-        var cravingId = CravingManager.getCurrentCravingItem(player.getServer(), player.getUuid());
+        var cravingId = CravingManager.getCurrentCravingItem(player.getEntityWorld().getServer(), player.getUuid());
 
         // 統計各食物吃過次數
         Map<String, Long> counts = history.stream()

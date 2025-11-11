@@ -8,7 +8,7 @@ public class FoodHistoryManager {
 
     public static int recordAndGetCount(PlayerEntity player, String foodId) {
         if (!(player instanceof ServerPlayerEntity sp)) return 0;
-        FoodHistoryState state = FoodHistoryState.get(sp.getServer());
+        FoodHistoryState state = FoodHistoryState.get(sp.getEntityWorld().getServer());
         int record = state.record(player, foodId);
         ServerPlayNetworking.send(sp, new FoodHistoryPayload(sp));
         return record;

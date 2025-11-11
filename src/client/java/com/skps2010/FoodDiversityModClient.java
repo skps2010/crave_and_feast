@@ -73,7 +73,10 @@ public class FoodDiversityModClient implements ClientModInitializer {
         if (current.isEmpty()) return;
 
         var mc = MinecraftClient.getInstance();
-        int x = 10, y = 10;
+        var cfg = FDConfigs.CFG;
+
+        int x = cfg.hudX;
+        int y = cfg.hudY;
 
         // 畫出食物圖示
         ctx.drawItem(current, x, y);

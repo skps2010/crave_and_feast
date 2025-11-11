@@ -57,8 +57,8 @@ public final class CravingManager {
 
     // 確保有渴望；過期則換新並通知
     public static CravingState.Entry ensureCraving(ServerPlayerEntity p) {
-        var st = CravingState.get(p.getServer());
-        var now = p.getWorld().getTime();
+        var st = CravingState.get(p.getEntityWorld().getServer());
+        var now = p.getEntityWorld().getTime();
         var e = st.get(p.getUuid());
         if (e == null || now >= e.nextChangeTick()) e = rerollCraving(p, now);
         return e;
@@ -70,11 +70,11 @@ public final class CravingManager {
         var id = Registries.ITEM.getId(stack.getItem()).toString();
         if (!id.equals(e.itemId())) return;
 
-        var st = CravingState.get(p.getServer());
+        var st = CravingState.get(p.getEntityWorld().getServer());
         var c = e.eatenInRound() + 1;
         st.set(p.getUuid(), new CravingState.Entry(e.itemId(), e.nextChangeTick(), c));
 
-        if (c >= FDConfigs.CFG.cravingMaxCount) rerollCraving(p, p.getWorld().getTime());
+        if (c >= FDConfigs.CFG.cravingMaxCount) rerollCraving(p, p.getEntityWorld().getTime());
     }
 
     public static boolean isCraving(ServerPlayerEntity p, Item item) {
@@ -92,7 +92,7 @@ public final class CravingManager {
     /* ------------------------- 換新＋通知 ------------------------- */
 
     private static CravingState.Entry rerollCraving(ServerPlayerEntity p, long now) {
-        var st = CravingState.get(p.getServer());
+        var st = CravingState.get(p.getEntityWorld().getServer());
         var id = pickRandomAllowedId().orElse("minecraft:bread"); // 安全後備
         var next = now + FDConfigs.CFG.cravingChangeInterval;
 
@@ -106,7 +106,7 @@ public final class CravingManager {
     }
 
     public static void tickCraving(ServerPlayerEntity p, long now) {
-        var st = CravingState.get(p.getServer());
+        var st = CravingState.get(p.getEntityWorld().getServer());
         var e = st.get(p.getUuid());
         if (e == null || now >= e.nextChangeTick()) rerollCraving(p, now); // 內部會送 CravingPayload
     }

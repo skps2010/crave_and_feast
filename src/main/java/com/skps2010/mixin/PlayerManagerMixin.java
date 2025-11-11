@@ -18,6 +18,7 @@ public class PlayerManagerMixin {
     @Inject(at = @At("TAIL"), method = "onPlayerConnect")
     private void onPlayerConnect(ClientConnection conn, ServerPlayerEntity player, ConnectedClientData clientData, CallbackInfo info) {
         ServerPlayNetworking.send(player, new FoodHistoryPayload(player));
-        ServerPlayNetworking.send(player, new CravingPayload(CravingManager.getCurrentCravingItem(player.getServer(), player.getUuid())));
+        ServerPlayNetworking.send(player,
+                new CravingPayload(CravingManager.getCurrentCravingItem(player.getEntityWorld().getServer(), player.getUuid())));
     }
 }

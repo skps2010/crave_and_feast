@@ -38,7 +38,7 @@ public class FoodDiversityModClient implements ClientModInitializer {
 
         int base = fc.nutrition(), mod = Math.round(base * info.multiplier());
         lines.add(Text.literal(combinedIcons(base, mod - base)));
-        lines.add(Text.literal(info.display()));
+        lines.add(Text.translatable(info.display()));
     }
 
     private static String combinedIcons(int basePts, int addPts) {
@@ -58,7 +58,7 @@ public class FoodDiversityModClient implements ClientModInitializer {
         }
         // 黃色完整圖示（加成）
         if (yellowFull > 0) {
-            sb.append("§6");
+            sb.append("§e");
             sb.append("\ueff4".repeat(yellowFull));
         }
         // 半格：依是否屬於加成決定顏色
@@ -79,7 +79,7 @@ public class FoodDiversityModClient implements ClientModInitializer {
         ctx.drawItem(current, x, y);
 
         // 繪字
-        ctx.drawText(mc.textRenderer, "渴望食物", x + 20, y + 2, 0xFFFFFFFF, true);
+        ctx.drawText(mc.textRenderer, Text.translatable("fd.hud.title"), x + 20, y + 2, 0xFFFFFFFF, true);
         ctx.drawText(mc.textRenderer, current.getName().getString(),
                 x + 20, y + 12, 0xFFAAAAAA, true);
     }
@@ -92,11 +92,8 @@ public class FoodDiversityModClient implements ClientModInitializer {
                 ctx.client().execute(() -> map = Map.copyOf(payload.map()))
         );
 
-        ClientPlayNetworking.registerGlobalReceiver(CravingPayload.ID, (payload, context) -> {
-            context.client().execute(() -> {
-                current = new ItemStack(payload.toItem());
-            });
-        });
+        ClientPlayNetworking.registerGlobalReceiver(CravingPayload.ID, (payload, context) ->
+                context.client().execute(() -> current = new ItemStack(payload.toItem())));
         HudElementRegistry.attachElementBefore(
                 VanillaHudElements.CHAT,
                 Identifier.of("fooddiversity", "craving_hud"),

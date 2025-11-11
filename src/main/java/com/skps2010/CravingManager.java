@@ -101,6 +101,7 @@ public final class CravingManager {
 
         // 主動通知（含剩餘時間）
         ServerPlayNetworking.send(p, new CravingPayload(id));
+        ServerPlayNetworking.send(p, new FoodHistoryPayload(p));
         return e;
     }
 

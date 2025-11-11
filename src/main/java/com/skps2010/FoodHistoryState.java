@@ -55,12 +55,4 @@ public class FoodHistoryState extends PersistentState {
         if (list == null) return Collections.emptyList();
         return new ArrayList<>(list);
     }
-
-    public int getCount(PlayerEntity player, String foodId) {
-        List<String> list = history.get(player.getUuid());
-        if (list == null) return 0;
-        int count = 0;
-        for (String f : list) if (f.equals(foodId)) count++;
-        return count;
-    }
 }

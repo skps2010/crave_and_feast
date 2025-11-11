@@ -5,23 +5,20 @@ import java.util.List;
 
 public class FDConfig {
     public float cravingMultiplier = 2.0f;
-    public String cravingDisplay = "Craving!";
-    public long cravingChangeInterval = 36000L;
+    public String cravingDisplay = "fd.craving";
+    public long cravingChangeInterval = 24000L;
     public int recordingFoodCount = 32;
-    public int cravingMaxCount = 3;
+    public int cravingMaxCount = 5;
     public List<Rule> rules = List.of(
-            new Rule(1, 2.0f, "never eaten"),
-            new Rule(8, 1.5f, "rarely eaten"),
-            new Rule(-1, 1.0f, "often eaten")
+            new Rule(0, 2.0f, "fd.rule.never"),
+            new Rule(7, 1.5f, "fd.rule.rare"),
+            new Rule(-1, 1.0f, "fd.rule.often")
     );
 
     public static class Rule {
         public int maxCount;
         public float multiplier;
         public String display;
-
-        public Rule() {
-        }
 
         public Rule(int m, float k, String d) {
             maxCount = m;

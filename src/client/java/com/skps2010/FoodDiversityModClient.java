@@ -63,7 +63,7 @@ public class FoodDiversityModClient implements ClientModInitializer {
         }
         // 半格：依是否屬於加成決定顏色
         if (totalHalf == 1) {
-            sb.append(addPts > 0 ? "§6" : "§f");
+            sb.append(addPts > 0 ? "§e" : "§f");
             sb.append('\ueff3');
         }
         return sb.toString();

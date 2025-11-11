@@ -3,64 +3,62 @@ package com.skps2010.mixin;
 import com.skps2010.CravingManager;
 import com.skps2010.FDConfigs;
 import com.skps2010.FoodHistoryManager;
-import net.minecraft.component.type.FoodComponent;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(FoodComponent.class)
+@Mixin(net.minecraft.component.type.FoodComponent.class)
 public abstract class FoodComponentMixin {
 
     @Unique
-    private static float computeMultiplier(boolean craving, int eaten) {
+    private static float fd$mult(boolean craving, int eatenBefore) {
         var C = FDConfigs.CFG;
         if (craving) return C.cravingMultiplier;
-
-        for (var r : C.rules) {
-            if (r.maxCount < 0 || eaten <= r.maxCount) return r.multiplier;
-        }
-        return 1.0f;
+        for (var r : C.rules)
+            if (r.maxCount < 0 || eatenBefore <= r.maxCount) return r.multiplier;
+        return 1f;
     }
 
-    @Inject(method = "onConsume", at = @At("HEAD"), cancellable = true)
-    private void modifyFoodEffects(World world, LivingEntity user, ItemStack stack,
-                                   net.minecraft.component.type.ConsumableComponent consumable,
-                                   CallbackInfo ci) {
+    @Redirect(
+            method = "onConsume",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/entity/player/HungerManager;eat(Lnet/minecraft/component/type/FoodComponent;)V"
+            )
+    )
+    private void fd$eatWithBoost(
+            net.minecraft.entity.player.HungerManager hunger,
+            net.minecraft.component.type.FoodComponent original,
+            net.minecraft.world.World world,
+            net.minecraft.entity.LivingEntity user,
+            net.minecraft.item.ItemStack stack) {
 
-        if (!(user instanceof ServerPlayerEntity player)) return;
+        // 不是玩家就照原樣
+        if (!(user instanceof net.minecraft.server.network.ServerPlayerEntity player)) {
+            hunger.eat(original);
+            return;
+        }
 
+        // 渴望輪計數/到期處理（內部會必要時換新並送封包）
         CravingManager.onConsume(player, stack);
-        // 先判斷「想吃」
+
         boolean craving = CravingManager.isCraving(player, stack.getItem());
-        FoodComponent food = (FoodComponent) (Object) this;
+        int eatenBefore = FoodHistoryManager.recordAndGetCount(player, stack.getItem().toString()) - 1;
+        if (eatenBefore < 0) eatenBefore = 0;
 
-        int eaten = FoodHistoryManager.recordAndGetCount(player, stack.getItem().toString());
-        float multiplier = computeMultiplier(craving, eaten - 1);
+        float m = fd$mult(craving, eatenBefore);
+        if (m == 1f) {
+            hunger.eat(original);
+            return;
+        }
 
-        int nutrition = Math.round(food.nutrition() * multiplier);
-        float saturation = food.saturation() * multiplier;
-
-        player.getHungerManager().eat(new FoodComponent(nutrition, saturation, food.canAlwaysEat()));
-
-        // 你原有的音效等照舊
-        Random random = user.getRandom();
-        world.playSound(null, user.getX(), user.getY(), user.getZ(),
-                consumable.sound().value(), SoundCategory.NEUTRAL, 1.0F,
-                random.nextTriangular(1.0F, 0.4F));
-        world.playSound(null, player.getX(), player.getY(), player.getZ(),
-                SoundEvents.ENTITY_PLAYER_BURP, SoundCategory.PLAYERS, 0.5F,
-                MathHelper.nextBetween(random, 0.9F, 1.0F));
-
-        ci.cancel();
+        // 基於原本的 FoodComponent 建一個加成版
+        var boosted = new net.minecraft.component.type.FoodComponent(
+                Math.round(original.nutrition() * m),
+                original.saturation() * m,
+                original.canAlwaysEat()
+        );
+        hunger.eat(boosted);
     }
 }

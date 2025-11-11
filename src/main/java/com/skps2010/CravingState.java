@@ -13,11 +13,13 @@ import java.util.*;
 
 public class CravingState extends PersistentState {
     // 每位玩家的目前想吃：itemId 與 下一次切換 tick
-    public static record Entry(String itemId, long nextChangeTick) {
+    public static record Entry(String itemId, long nextChangeTick, int eatenInRound) {
         public static final Codec<Entry> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.STRING.fieldOf("itemId").forGetter(Entry::itemId),
-                Codec.LONG.fieldOf("nextChangeTick").forGetter(Entry::nextChangeTick)
+                Codec.LONG.fieldOf("nextChangeTick").forGetter(Entry::nextChangeTick),
+                Codec.INT.fieldOf("eatenInRound").forGetter(Entry::eatenInRound)
         ).apply(i, Entry::new));
+        Entry withCount(int c){ return new Entry(itemId, nextChangeTick, c); }
     }
 
     private final Map<UUID, Entry> data = new HashMap<>();

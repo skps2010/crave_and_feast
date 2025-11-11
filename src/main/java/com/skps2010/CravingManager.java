@@ -27,7 +27,7 @@ public final class CravingManager {
     // 快取「沒有負面效果」的食物清單（資料包重載時記得重建）
     private static volatile List<Item> allowedFoods = List.of();
 
-    public static void rebuildAllowedFoods(MinecraftServer server) {
+    public static void rebuildAllowedFoods() {
         List<Item> list = new ArrayList<>();
         for (Item item : Registries.ITEM) {
             // 只要有 FoodComponent 才算食物（避免把藥水、其他物品塞進來）
@@ -59,32 +59,46 @@ public final class CravingManager {
         return false;
     }
 
-    public static boolean isCraving( PlayerEntity player, Item item) {
-        MinecraftServer server = player.getServer();
-        if (server == null) return false;
-        ensurePool(server);
-
-        CravingState state = CravingState.get(server);
-        long now = server.getOverworld().getTime(); // world time in ticks
-
-        UUID uuid = player.getUuid();
-        CravingState.Entry e = state.get(uuid);
+    // 確保當前渴望存在；到期就重抽並通知
+    public static CravingState.Entry ensureCraving(ServerPlayerEntity p){
+        var s = p.getServer(); var w = p.getWorld();
+        var st = CravingState.get(s);
+        var e = st.get(p.getUuid());
+        long now = w.getTime();
         if (e == null || now >= e.nextChangeTick()) {
-            // 需要抽新的想吃
-            Item chosen = pickRandomAllowed();
-            if (chosen != null) {
-                String itemId = Registries.ITEM.getId(chosen).toString();
-                state.set(uuid, new CravingState.Entry(itemId, now + FDConfigs.CFG.cravingChangeInterval));
-                if (player instanceof ServerPlayerEntity spe) {
-                    ServerPlayNetworking.send(spe, new CravingPayload(itemId, FDConfigs.CFG.cravingChangeInterval));
-                }
-                e = state.get(uuid);
-            }
+            String id = Registries.ITEM.getId(pickRandomAllowed()).toString();
+            long next = now + FDConfigs.CFG.cravingChangeInterval;
+            e = new CravingState.Entry(id, next, 0);
+            st.set(p.getUuid(), e);
+            // 主動通知
+            ServerPlayNetworking.send(p, new CravingPayload(id));
         }
+        return e;
+    }
 
-        if (e == null) return false;
-        Identifier id = Registries.ITEM.getId(item);
-        return id.toString().equals(e.itemId());
+    // 玩家吃東西時呼叫；若是渴望就遞增，達上限則立刻重抽並通知
+    public static void onConsume(ServerPlayerEntity p, ItemStack stack){
+        var e = ensureCraving(p);
+        String id = Registries.ITEM.getId(stack.getItem()).toString();
+        if (!e.itemId().equals(id)) return;
+
+        var st = CravingState.get(p.getServer());
+        int c = e.eatenInRound() + 1;
+        st.set(p.getUuid(), e.withCount(c));
+
+        if (c >= FDConfigs.CFG.cravingMaxCount) {
+            long now = p.getWorld().getTime();
+            String nextId = pickRandomAllowed().toString();
+            long next = now + FDConfigs.CFG.cravingChangeInterval;
+            st.set(p.getUuid(), new CravingState.Entry(nextId, next, 0));
+            // 主動通知
+            ServerPlayNetworking.send(p, new CravingPayload(nextId));
+        }
+    }
+
+    public static boolean isCraving(ServerPlayerEntity p, Item item){
+        var e = ensureCraving(p);
+        return Registries.ITEM.getId(item).toString().equals(e.itemId());
     }
 
     public static String getCurrentCravingItem(MinecraftServer server, UUID uuid) {
@@ -93,11 +107,8 @@ public final class CravingManager {
         return e.itemId();
     }
 
-    private static void ensurePool(MinecraftServer server) {
-        if (allowedFoods.isEmpty()) rebuildAllowedFoods(server);
-    }
-
     private static Item pickRandomAllowed() {
+        if (allowedFoods.isEmpty()) rebuildAllowedFoods();
         List<Item> pool = allowedFoods;
         if (pool.isEmpty()) return null;
         int idx = ThreadLocalRandom.current().nextInt(pool.size());

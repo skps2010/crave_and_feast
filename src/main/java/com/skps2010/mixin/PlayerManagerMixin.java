@@ -21,10 +21,7 @@ public class PlayerManagerMixin
     @Inject(at = @At("TAIL"), method = "onPlayerConnect")
     private void onPlayerConnect(ClientConnection conn, ServerPlayerEntity player, ConnectedClientData clientData, CallbackInfo info)
     {
-        FoodHistoryState state = FoodHistoryState.get(player.getServer());
-        List<String> history = state.getHistory(player);
         ServerPlayNetworking.send(player, new FoodHistoryPayload(player));
-        ServerPlayNetworking.send(player, new CravingPayload(CravingManager.getCurrentCravingItem(player.getServer(), player.getUuid()),
-                FDConfigs.CFG.cravingChangeInterval));
+        ServerPlayNetworking.send(player, new CravingPayload(CravingManager.getCurrentCravingItem(player.getServer(), player.getUuid())));
     }
 }

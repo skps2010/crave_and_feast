@@ -8,6 +8,7 @@ public class FDConfig {
     public String cravingDisplay = "Craving!";
     public long cravingChangeInterval = 36000L;
     public int recordingFoodCount = 32;
+    public int cravingMaxCount = 3;
     public List<Rule> rules = List.of(
             new Rule(1, 2.0f, "never eaten"),
             new Rule(8, 1.5f, "rarely eaten"),

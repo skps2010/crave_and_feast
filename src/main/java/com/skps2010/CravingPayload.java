@@ -8,13 +8,12 @@ import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
 
-public record CravingPayload(String itemId, long remainingTicks) implements CustomPayload {
+public record CravingPayload(String itemId) implements CustomPayload {
     public static final Id<CravingPayload> ID = new Id<>(Identifier.of("fooddiversity", "craving_sync"));
 
     public static final PacketCodec<RegistryByteBuf, CravingPayload> CODEC =
             PacketCodec.tuple(
                     PacketCodecs.STRING, CravingPayload::itemId,
-                    PacketCodecs.VAR_LONG, CravingPayload::remainingTicks,
                     CravingPayload::new
             );
 

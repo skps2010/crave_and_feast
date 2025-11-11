@@ -23,7 +23,6 @@ import java.util.Map;
 @Environment(EnvType.CLIENT)
 public class FoodTooltipHandler implements ClientModInitializer {
     private static ItemStack current = ItemStack.EMPTY;
-    private static long remaining = 0L; // ticks
     private static Map<String, FoodHistoryPayload.FoodInfo> map =
             Map.of("default", new FoodHistoryPayload.FoodInfo(1, "error"));
 
@@ -38,7 +37,6 @@ public class FoodTooltipHandler implements ClientModInitializer {
         ClientPlayNetworking.registerGlobalReceiver(CravingPayload.ID, (payload, context) -> {
             context.client().execute(() -> {
                 current = new ItemStack(payload.toItem());
-                remaining = Math.max(0, payload.remainingTicks());
             });
         });
         HudElementRegistry.attachElementBefore(
@@ -99,10 +97,6 @@ public class FoodTooltipHandler implements ClientModInitializer {
 
         // 畫出食物圖示
         ctx.drawItem(current, x, y);
-
-        // 轉換剩餘秒數
-        long secs = remaining / 20;
-        long mm = secs / 60, ss = secs % 60;
 
         // 繪字
         ctx.drawText(mc.textRenderer, "渴望食物", x + 20, y + 2, 0xFFFFFFFF, true);

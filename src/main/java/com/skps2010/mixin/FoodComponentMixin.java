@@ -7,6 +7,7 @@ import net.minecraft.component.type.FoodComponent;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.MathHelper;
@@ -37,8 +38,9 @@ public abstract class FoodComponentMixin {
                                    net.minecraft.component.type.ConsumableComponent consumable,
                                    CallbackInfo ci) {
 
-        if (!(user instanceof PlayerEntity player)) return;
+        if (!(user instanceof ServerPlayerEntity player)) return;
 
+        CravingManager.onConsume(player, stack);
         // 先判斷「想吃」
         boolean craving = CravingManager.isCraving(player, stack.getItem());
         FoodComponent food = (FoodComponent)(Object)this;

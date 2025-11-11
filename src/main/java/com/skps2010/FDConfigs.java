@@ -12,7 +12,7 @@ public final class FDConfigs {
     public static FDConfig CFG;
 
     public static void load() {
-        Path p = FabricLoader.getInstance().getConfigDir().resolve("fooddiversity.json");
+        Path p = FabricLoader.getInstance().getConfigDir().resolve("crave_and_feast.json");
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         try {
             if (Files.notExists(p)) {

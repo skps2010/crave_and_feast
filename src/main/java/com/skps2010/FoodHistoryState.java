@@ -19,7 +19,7 @@ public class FoodHistoryState extends PersistentState {
                     .forGetter(s -> s.history)
     ).apply(i, FoodHistoryState::new));
     public static PersistentStateType<FoodHistoryState> TYPE = new PersistentStateType<>(
-            "food_history", FoodHistoryState::new, CODEC, DataFixTypes.SAVED_DATA_MAP_DATA
+            "crave_and_feast_food_history", FoodHistoryState::new, CODEC, DataFixTypes.SAVED_DATA_MAP_DATA
     );
     private final Map<UUID, List<String>> history = new HashMap<>();
 

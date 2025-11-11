@@ -5,7 +5,7 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.minecraft.server.network.ServerPlayerEntity;
 
-public class FoodDiversityMod implements ModInitializer {
+public class CraveAndFeast implements ModInitializer {
     @Override
     public void onInitialize() {
         PayloadTypeRegistry.playS2C().register(FoodHistoryPayload.ID, FoodHistoryPayload.CODEC);
@@ -18,6 +18,6 @@ public class FoodDiversityMod implements ModInitializer {
                 CravingManager.tickCraving(p, now);
             }
         });
-        System.out.println("[FoodDiversityMod] Initialized!");
+        System.out.println("[CraveAndFeast] Initialized!");
     }
 }

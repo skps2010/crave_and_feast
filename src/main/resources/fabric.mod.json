@@ -1,28 +1,28 @@
 {
   "schemaVersion": 1,
-  "id": "fooddiversity",
+  "id": "crave_and_feast",
   "version": "1.0.0",
-  "name": "Food Diversity Mod",
-  "description": "Adds food diversity mechanics, cravings, and nutritional history to Minecraft.",
+  "name": "Crave & Feast",
+  "description": "Adds a dynamic craving system that rewards players for eating a variety of foods.\nEvery player has one food they currently crave — consuming it grants double nourishment,\nwhile eating the same food repeatedly provides diminishing returns.\nPerfect for survival worlds where you want eating to feel meaningful and diverse.",
   "authors": [
     "skps2010"
   ],
   "contact": {
     "homepage": "https://github.com/skps2010",
-    "sources": "https://github.com/skps2010/fooddiversity"
+    "sources": "https://github.com/skps2010/crave_and_feast"
   },
   "license": "MIT",
   "environment": "*",
   "entrypoints": {
     "main": [
-      "com.skps2010.FoodDiversityMod"
+      "com.skps2010.CraveAndFeast"
     ],
     "client": [
-      "com.skps2010.FoodDiversityModClient"
+      "com.skps2010.CraveAndFeastClient"
     ]
   },
   "mixins": [
-    "fooddiversity.mixins.json"
+    "crave_and_feast.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=0.15.0",

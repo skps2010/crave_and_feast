@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 @Environment(EnvType.CLIENT)
-public class FoodDiversityModClient implements ClientModInitializer {
+public class CraveAndFeastClient implements ClientModInitializer {
     private static ItemStack current = ItemStack.EMPTY;
     private static Map<String, FoodHistoryPayload.FoodInfo> map =
             Map.of("default", new FoodHistoryPayload.FoodInfo(1, "error"));
@@ -82,14 +82,14 @@ public class FoodDiversityModClient implements ClientModInitializer {
         ctx.drawItem(current, x, y);
 
         // 繪字
-        ctx.drawText(mc.textRenderer, Text.translatable("fd.hud.title"), x + 20, y + 2, 0xFFFFFFFF, true);
+        ctx.drawText(mc.textRenderer, Text.translatable("cf.hud.title"), x + 20, y + 2, 0xFFFFFFFF, true);
         ctx.drawText(mc.textRenderer, current.getName().getString(),
                 x + 20, y + 12, 0xFFAAAAAA, true);
     }
 
     @Override
     public void onInitializeClient() {
-        ItemTooltipCallback.EVENT.register(FoodDiversityModClient::onTooltip);
+        ItemTooltipCallback.EVENT.register(CraveAndFeastClient::onTooltip);
 
         ClientPlayNetworking.registerGlobalReceiver(FoodHistoryPayload.ID, (payload, ctx) ->
                 ctx.client().execute(() -> map = Map.copyOf(payload.map()))
@@ -99,8 +99,8 @@ public class FoodDiversityModClient implements ClientModInitializer {
                 context.client().execute(() -> current = new ItemStack(payload.toItem())));
         HudElementRegistry.attachElementBefore(
                 VanillaHudElements.CHAT,
-                Identifier.of("fooddiversity", "craving_hud"),
-                FoodDiversityModClient::render
+                Identifier.of("crave_and_feast", "craving_hud"),
+                CraveAndFeastClient::render
         );
     }
 }

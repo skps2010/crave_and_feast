@@ -9,7 +9,7 @@ import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
 
 public record CravingPayload(String itemId) implements CustomPayload {
-    public static final Id<CravingPayload> ID = new Id<>(Identifier.of("fooddiversity", "craving_sync"));
+    public static final Id<CravingPayload> ID = new Id<>(Identifier.of("crave_and_feast", "craving_sync"));
 
     public static final PacketCodec<RegistryByteBuf, CravingPayload> CODEC =
             PacketCodec.tuple(

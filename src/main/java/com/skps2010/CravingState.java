@@ -24,7 +24,7 @@ public class CravingState extends PersistentState {
         return s;
     }));
     public static final PersistentStateType<CravingState> TYPE =
-            new PersistentStateType<>("fooddiversity_craving", CravingState::new, CODEC, DataFixTypes.SAVED_DATA_MAP_DATA);
+            new PersistentStateType<>("crave_and_feast_craving", CravingState::new, CODEC, DataFixTypes.SAVED_DATA_MAP_DATA);
     private final Map<UUID, Entry> data = new HashMap<>();
 
     public static CravingState get(MinecraftServer server) {

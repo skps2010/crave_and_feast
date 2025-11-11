@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 public record FoodHistoryPayload(Map<String, FoodInfo> map) implements CustomPayload {
     public static final Id<FoodHistoryPayload> ID =
-            new Id<>(Identifier.of("food_diversity", "food_history_sync"));
+            new Id<>(Identifier.of("crave_and_feast", "crave_and_feast_sync"));
     private static final PacketCodec<RegistryByteBuf, FoodInfo> INFO_CODEC =
             PacketCodec.tuple(
                     PacketCodecs.FLOAT, FoodInfo::multiplier,
